@@ -19,7 +19,16 @@ def send_coverage_badge(job_name):
     auth = (current_app.config['JENKINS_USERNAME'],
             current_app.config['JENKINS_TOKEN'])
     auth = None if auth == (None, None) else auth
-    jresp = requests.get(jurl, auth=auth)
+
+    # Only accept responses in English. This is because when parsing the
+    # response, 'Lines' is expected, so a valid response in a different
+    # language will fail even though the coverage report may be there.
+    # This way, Jenkins server's response will always be in English.
+    s = requests.Session()
+    headers = {"Accept-Language": "en-US,en;q=0.9"}
+    s.headers.update(headers)
+
+    jresp = s.get(jurl, auth=auth)
     print("GET {} {}".format(jresp.status_code, jurl))
     if jresp.status_code != 200:
         return send_error_badge()
